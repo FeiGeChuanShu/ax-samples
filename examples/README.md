@@ -17,6 +17,7 @@ AX-Samples 将不断更新最流行的、实用的、有趣的示例代码。
   - YOLOv4-Tiny
   - YOLOv4-Tiny-3l
   - [YOLOv5s](#YOLOv5s)
+  - [YOLOv5-Lite](#YOLOv5-Lite)([original model](https://github.com/ppogg/YOLOv5-Lite))
   - [YOLOv7-Tiny](#YOLOv7-Tiny)
   - [YOLOX-S](#YOLOX-S)
   - YOLO-Fastest-XL
@@ -36,6 +37,7 @@ AX-Samples 将不断更新最流行的、实用的、有趣的示例代码。
   - [Monodlex](#Monodlex)
 - 人体关键点
   - [HRNet](#HRNet)
+  - [AX-POSE-PPL](#AX-POSE-PPL)
   - [HandPose](#HandPose)
 - 人体分割
   - [PP-HumanSeg](#PP-HumanSeg)
@@ -118,6 +120,48 @@ detection num: 3
  1:  65%, [ 167,  120,  564,  417], bicycle
 ```
 ![YOLOv5s](../docs/yolov5s.jpg)
+
+#### YOLOv5-Lite
+```
+root@AXERA:~/samples# ./ax_yolov5_lite -i cengiz-sari-X4spr8Kuwxc-unsplash.jpg -m ./models/v5Lite-g-sim-640.joint
+--------------------------------------
+model file : ./models/v5Lite-g-sim-640.joint
+image file : cengiz-sari-X4spr8Kuwxc-unsplash.jpg
+img_h, img_w : 640 640
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.20
+07305a6
+run over: output len 3
+--------------------------------------
+Create handle took 492.77 ms (neu 34.07 ms, axe 0.00 ms, overhead 458.70 ms)
+--------------------------------------
+Repeat 10 times, avg time 22.56 ms, max_time 22.97 ms, min_time 22.48 ms
+--------------------------------------
+detection num: 18
+ 0:  94%, [1866, 1142, 2485, 2806], person
+ 0:  92%, [2417, 1240, 2971, 2807], person
+ 0:  89%, [1356, 1234, 1762, 2432], person
+ 2:  88%, [2827, 1334, 3797, 2230], car
+ 2:  85%, [3385, 1416, 4031, 2852], car
+ 0:  84%, [ 895, 1276, 1281, 2424], person
+ 0:  78%, [ 747, 1278,  926, 1729], person
+ 0:  77%, [  25, 1254,  213, 1809], person
+ 0:  73%, [ 419, 1325,  585, 1780], person
+ 0:  71%, [ 247, 1316,  423, 1801], person
+28:  64%, [ 729, 1812,  998, 2319], suitcase
+ 0:  61%, [ 610, 1421,  744, 1729], person
+ 2:  53%, [3808, 1353, 4031, 1502], car
+ 2:  50%, [2782, 1353, 2954, 1519], car
+ 0:  42%, [1167, 1204, 1325, 1572], person
+ 0:  39%, [1318, 1261, 1459, 1632], person
+12:  38%, [1861, 1370, 1949, 1530], parking meter
+ 0:  35%, [ 171, 1305,  284, 1788], person
+```
+![YOLOv5-Lite](../docs/yolov5_lite_out.jpg)
 
 #### YOLOv5s_visdrone
 ```
@@ -304,6 +348,72 @@ Repeat 10 times, avg time 14.11 ms, max_time 14.64 ms, min_time 14.04 ms
 --------------------------------------
 ```
 ![HRNet](../docs/hrnet.png)
+
+#### AX-POSE-PPL
+```
+root@AXERA:~/test# ./ax_pose_ppl -d ./models/ax_person_det.joint -p ./models/ax_pose.joint -i align_npu.jpg
+--------------------------------------
+relu_tiny25 p det model file : ./models/ax_person_det.joint
+relu_tiny25 p det image file : align_npu.jpg
+relu_tiny25 p det img_h, img_w : 512 288
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+run crop_resize time cost avg: 8.835800 :ms
+relu_tiny25 p det Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+relu_tiny25 p det Tools version: 0.6.0.30
+100b6396
+relu_tiny25 p det run over: output len 3
+--------------------------------------
+relu_tiny25 p det post_time_costs time cost: 1.86 ms
+--------------------------------------
+--------------------------------------
+relu_tiny25 p det create handle took 142.63 ms (neu 5.09 ms, axe 0.00 ms, overhead 137.54 ms)
+--------------------------------------
+relu_tiny25 p det Repeat 1 times, avg time 4.51 ms, max_time 4.51 ms, min_time 4.51 ms
+--------------------------------------
+relu_tiny25 p det detection num: 1
+ 0:  86%, [ 281,    0,  503,  425], person
+px 193py -53pw 398ph 531
+need black px 193 py 0 pw 398 ph 426
+fx 193 fy 0 fw 398 fh 426 --------------------------------------
+pose pre_process time cost: 24.59 ms
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+pose Tools version: 0.6.1.14
+4111370
+pose run over: output len 2
+x1: 368.271, y1: 77.7832
+x1: 373.457, y1: 72.5977
+x1: 363.086, y1: 72.5977
+x1: 386.939, y1: 75.709
+x1: 355.826, y1: 78.8203
+x1: 406.645, y1: 114.082
+x1: 363.086, y1: 122.379
+x1: 446.055, y1: 148.307
+x1: 343.381, y1: 159.715
+x1: 445.018, y1: 160.752
+x1: 308.119, y1: 177.346
+x1: 428.424, y1: 214.682
+x1: 400.422, y1: 214.682
+x1: 431.535, y1: 288.316
+x1: 372.42, y1: 277.945
+x1: 473.02, y1: 359.877
+x1: 404.57, y1: 343.283
+--------------------------------------
+pose post_time_costs time cost: 0.66 ms
+--------------------------------------
+--------------------------------------
+pose Create handle took 904.05 ms (neu 19.85 ms, axe 0.00 ms, overhead 884.20 ms)
+--------------------------------------
+pose Repeat 1 times, avg time 8.95 ms, max_time 8.95 ms, min_time 8.95 ms
+--------------------------------------
+ax_pose_ppl.png
+--------------------------------------
+```
+![HRNet](../docs/ax_pose_ppl.jpg)
 
 #### FaceParsing
 ```

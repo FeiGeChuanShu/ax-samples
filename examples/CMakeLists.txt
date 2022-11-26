@@ -75,6 +75,7 @@ if (AXERA_TARGET_CHIP MATCHES "ax620a")   # ax620 support
     axera_example (ax_classification_nv12   ax_classification_nv12_resize_steps.cc)
     axera_example (ax_classification_nv12_opt   ax_classification_nv12_resize_opt.cc)
     axera_example (ax_yolov5s               ax_yolov5s_steps.cc)
+    axera_example (ax_yolov5_lite               ax_yolov5_lite_steps.cc)
     axera_example (ax_yolov5s_face          ax_yolov5s_face_steps.cc)
     axera_example (ax_yolov5s_visdrone      ax_yolov5s_visdrone_steps.cc)
     axera_example (ax_yoloxs                ax_yoloxs_steps.cc)
@@ -89,6 +90,7 @@ if (AXERA_TARGET_CHIP MATCHES "ax620a")   # ax620 support
     axera_example (ax_nanodet               ax_nanodet_steps.cc)
     axera_example (ax_paddle_yolov3         ax_paddle_yolov3_steps.cc)
     axera_example (ax_scrfd                 ax_scrfd_steps.cc)
+    axera_example (ax_pose_ppl              ax_pose_ppl_steps.cc)
 
     axera_example (ax_classification_accuracy   ax_classification_accuracy.cc)
     axera_example (ax_yolov3_accuracy           ax_yolov3_accuracy.cc)
