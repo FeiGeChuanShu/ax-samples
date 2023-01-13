@@ -15,7 +15,7 @@
  */
 
 /*
- * Author: hebing
+ * Author: Xiaolaoshu
  */
 
 #include <cstdio>
@@ -44,8 +44,8 @@
 #include <fstream>
 
 const int HRNET_H = 256;
-const int HRNET_W = 192;
-const int HRNET_JOINTS = 17;
+const int HRNET_W = 256;
+const int HRNET_JOINTS = 20;
 
 const int DEFAULT_LOOP_COUNT = 1;
 
@@ -244,12 +244,12 @@ namespace ax
         fprintf(stdout, "run over: output len %d\n", io_info->nOutputSize);
 
         // 5. get result
-        pose::ai_body_parts_s ai_point_result;
+        pose::ai_animal_parts_s ai_point_result;
         auto& output = io_info->pOutputs[0];
         auto& info = joint_io_arr.pOutputs[0];
         auto ptr = (float*)info.pVirAddr;
 
-        pose::post_process(ptr, ai_point_result, HRNET_JOINTS, HRNET_H, HRNET_W);
+        pose::animal_post_process(ptr, ai_point_result, HRNET_JOINTS, HRNET_H, HRNET_W);
 
         // 6. show time costs
         fprintf(stdout, "--------------------------------------\n");
@@ -272,7 +272,7 @@ namespace ax
                 *min_max_time.first);
         fprintf(stdout, "--------------------------------------\n");
 
-        pose::draw_result(mat, ai_point_result, HRNET_JOINTS, HRNET_W, HRNET_H);
+        pose::draw_animal_result(mat, ai_point_result, HRNET_JOINTS, HRNET_W, HRNET_H);
 
         clear_and_exit();
         return true;
@@ -371,7 +371,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Run hrnet failed.\n");
     }
 
-    cv::imwrite("./hrnet_res.jpg", mat);
+    cv::imwrite("./hrnet_animal_res.jpg", mat);
 
     // 6. last de-init
     //   as step 1, if the device inited by another app, DO NOT de-init the

@@ -82,6 +82,7 @@ if (AXERA_TARGET_CHIP MATCHES "ax620a")   # ax620 support
     axera_example (ax_yolo_fastest          ax_yolo_fastest_steps.cc)
     axera_example (ax_yolo_fastest_body     ax_yolo_fastest_body_steps.cc)
     axera_example (ax_hrnet                 ax_hrnet_steps.cc)
+    axera_example (ax_hrnet_animal          ax_hrnet_animal_steps.cc)
     axera_example (ax_yolov3                ax_yolov3_steps.cc)
     axera_example (ax_yolov3_tiny           ax_yolov3_tiny_steps.cc)
     axera_example (ax_yolov4                ax_yolov4_steps.cc)
@@ -91,6 +92,7 @@ if (AXERA_TARGET_CHIP MATCHES "ax620a")   # ax620 support
     axera_example (ax_paddle_yolov3         ax_paddle_yolov3_steps.cc)
     axera_example (ax_scrfd                 ax_scrfd_steps.cc)
     axera_example (ax_pose_ppl              ax_pose_ppl_steps.cc)
+    axera_example (ax_yolov5s_license_plate ax_yolov5s_license_plate_steps.cc)
 
     axera_example (ax_classification_accuracy   ax_classification_accuracy.cc)
     axera_example (ax_yolov3_accuracy           ax_yolov3_accuracy.cc)
@@ -106,6 +108,11 @@ if (AXERA_TARGET_CHIP MATCHES "ax620a")   # ax620 support
     axera_example (ax_face_parsing          ax_face_parsing_steps.cc)
     axera_example (ax_handpose              ax_handpose_steps.cc)
     axera_example (ax_yolov5s_seg           ax_yolov5s_seg_steps.cc)
+    axera_example (ax_palm_detection        ax_palm_detection_steps.cc)
+    axera_example (ax_yolopv2               ax_yolopv2_steps.cc)
+    axera_example (ax_yolov7s_face          ax_yolov7s_face_steps.cc)
+    axera_example (ax_yolov7s_palm          ax_yolov7s_palm_steps.cc)
+    axera_example (ax_yolov6s               ax_yolov6s_steps.cc)
 else() # ax630a support
     axera_example (ax_classification        ax_classification_steps.cc)
     axera_example (ax_yolov5s               ax_yolov5s_steps.cc)

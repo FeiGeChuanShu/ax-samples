@@ -15,19 +15,17 @@
  */
 
 /*
- * Author: hebing
+ * Author: FeiGeChuanShu
  */
 
 #include <cstdio>
 #include <cstring>
 #include <numeric>
-
+#include <list>
 #include <opencv2/opencv.hpp>
 
 #include "base/detection.hpp"
-#include "base/transform.hpp"
 #include "base/common.hpp"
-#include "base/pose.hpp"
 #include "middleware/io.hpp"
 
 #include "utilities/args.hpp"
@@ -40,20 +38,26 @@
 #include "joint.h"
 #include "joint_adv.h"
 
-#include <iostream>
-#include <fstream>
-
-const int HRNET_H = 256;
-const int HRNET_W = 192;
-const int HRNET_JOINTS = 17;
+const int DEFAULT_IMG_H = 192;
+const int DEFAULT_IMG_W = 192;
 
 const int DEFAULT_LOOP_COUNT = 1;
 
+const float PROB_THRESHOLD = 0.45f;
+const float NMS_THRESHOLD = 0.45f;
+
+const int map_size[2] = {24, 12};
+const int strides[2] = {8, 16};
+const int anchor_size[2] = {2, 6};
+const float anchor_offset[2] = {0.5f, 0.5f};
+
 namespace ax
 {
+    namespace det = detection;
     namespace mw = middleware;
     namespace utl = utilities;
-
+    
+    
     bool run_detection(const std::string& model, const std::vector<uint8_t>& data, const int& repeat, cv::Mat& mat, uint32_t input_h, uint32_t input_w)
     {
         // 1. create a runtime handle and load the model
@@ -243,13 +247,18 @@ namespace ax
         }
         fprintf(stdout, "run over: output len %d\n", io_info->nOutputSize);
 
-        // 5. get result
-        pose::ai_body_parts_s ai_point_result;
-        auto& output = io_info->pOutputs[0];
-        auto& info = joint_io_arr.pOutputs[0];
-        auto ptr = (float*)info.pVirAddr;
+        // 5. get bbox
+        std::vector<det::PalmObject> proposals;
+        std::vector<det::PalmObject> objects;
 
-        pose::post_process(ptr, ai_point_result, HRNET_JOINTS, HRNET_H, HRNET_W);
+        auto& bboxes_info = joint_io_arr.pOutputs[0];
+        auto bboxes_ptr = (float*)bboxes_info.pVirAddr;
+        auto& scores_info = joint_io_arr.pOutputs[1];
+        auto scores_ptr = (float*)scores_info.pVirAddr;
+        float prob_threshold_unsigmoid = -1.0f * (float)std::log((1.0f / PROB_THRESHOLD) - 1.0f);
+        det::generate_proposals_palm(proposals, PROB_THRESHOLD, DEFAULT_IMG_W, DEFAULT_IMG_H, scores_ptr, bboxes_ptr, 2, strides, anchor_size, anchor_offset, map_size, prob_threshold_unsigmoid);
+
+        det::get_out_bbox_palm(proposals, objects, NMS_THRESHOLD, input_h, input_w, mat.rows, mat.cols);
 
         // 6. show time costs
         fprintf(stdout, "--------------------------------------\n");
@@ -271,9 +280,9 @@ namespace ax
                 *min_max_time.second,
                 *min_max_time.first);
         fprintf(stdout, "--------------------------------------\n");
+        fprintf(stdout, "detection num: %d\n", objects.size());
 
-        pose::draw_result(mat, ai_point_result, HRNET_JOINTS, HRNET_W, HRNET_H);
-
+        det::draw_objects_palm(mat, objects, "palm_detection");
         clear_and_exit();
         return true;
     }
@@ -284,7 +293,7 @@ int main(int argc, char* argv[])
     cmdline::parser cmd;
     cmd.add<std::string>("model", 'm', "joint file(a.k.a. joint model)", true, "");
     cmd.add<std::string>("image", 'i', "image file", true, "");
-    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(HRNET_H) + "," + std::to_string(HRNET_W));
+    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(DEFAULT_IMG_H) + "," + std::to_string(DEFAULT_IMG_W));
 
     cmd.add<int>("repeat", 'r', "repeat count", false, DEFAULT_LOOP_COUNT);
     cmd.parse_check(argc, argv);
@@ -310,7 +319,7 @@ int main(int argc, char* argv[])
 
     auto input_size_string = cmd.get<std::string>("size");
 
-    std::array<int, 2> input_size = {HRNET_H, HRNET_W};
+    std::array<int, 2> input_size = {DEFAULT_IMG_H, DEFAULT_IMG_W};
 
     auto input_size_flag = utilities::parse_string(input_size_string, input_size);
 
@@ -320,7 +329,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Input %s(%s) is not allowed, please check it.\n", kind.c_str(), value.c_str());
         };
 
-        if (!input_size_flag) { show_error("size", input_size_string); }
+        show_error("size", input_size_string);
 
         return -1;
     }
@@ -342,9 +351,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Read image failed.\n");
         return -1;
     }
-    int src_w = mat.cols;
-    int src_h = mat.rows;
-    common::get_input_data_no_letterbox(mat, image, input_size[0], input_size[1]);
+    common::get_input_data_letterbox(mat, image, input_size[0], input_size[1], true);
 
     // 3. init ax system, if NOT INITED in other apps.
     //   if other app init the device, DO NOT INIT DEVICE AGAIN.
@@ -368,10 +375,8 @@ int main(int argc, char* argv[])
     auto flag = ax::run_detection(model_file, image, repeat, mat, input_size[0], input_size[1]);
     if (!flag)
     {
-        fprintf(stderr, "Run hrnet failed.\n");
+        fprintf(stderr, "Run classification failed.\n");
     }
-
-    cv::imwrite("./hrnet_res.jpg", mat);
 
     // 6. last de-init
     //   as step 1, if the device inited by another app, DO NOT de-init the

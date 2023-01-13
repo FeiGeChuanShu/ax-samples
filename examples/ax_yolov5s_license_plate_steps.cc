@@ -15,7 +15,9 @@
  */
 
 /*
- * Author: hebing
+ * Author: ZHEQIUSHUI
+ *
+ * original pretrained: https://github.com/deepcam-cn/yolov5-face
  */
 
 #include <cstdio>
@@ -25,9 +27,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "base/detection.hpp"
-#include "base/transform.hpp"
 #include "base/common.hpp"
-#include "base/pose.hpp"
 #include "middleware/io.hpp"
 
 #include "utilities/args.hpp"
@@ -40,17 +40,22 @@
 #include "joint.h"
 #include "joint_adv.h"
 
-#include <iostream>
-#include <fstream>
+const int DEFAULT_IMG_H = 640;
+const int DEFAULT_IMG_W = 640;
 
-const int HRNET_H = 256;
-const int HRNET_W = 192;
-const int HRNET_JOINTS = 17;
+const char* CLASS_NAMES[] = {
+    "face"};
+const float ANCHORS[18] = {4, 5, 8, 10, 13, 16,           //# P3/8
+                           23, 29, 43, 55, 73, 105,       //# P4/16
+                           146, 217, 231, 300, 335, 433}; //# P5/32
 
 const int DEFAULT_LOOP_COUNT = 1;
 
+const float PROB_THRESHOLD = 0.35f;
+const float NMS_THRESHOLD = 0.45f;
 namespace ax
 {
+    namespace det = detection;
     namespace mw = middleware;
     namespace utl = utilities;
 
@@ -243,13 +248,23 @@ namespace ax
         }
         fprintf(stdout, "run over: output len %d\n", io_info->nOutputSize);
 
-        // 5. get result
-        pose::ai_body_parts_s ai_point_result;
-        auto& output = io_info->pOutputs[0];
-        auto& info = joint_io_arr.pOutputs[0];
-        auto ptr = (float*)info.pVirAddr;
+        // 5. get bbox
+        std::vector<det::Object> proposals;
+        std::vector<det::Object> objects;
 
-        pose::post_process(ptr, ai_point_result, HRNET_JOINTS, HRNET_H, HRNET_W);
+        float prob_threshold_unsigmoid = -1.0f * (float)std::log((1.0f / PROB_THRESHOLD) - 1.0f);
+        for (uint32_t i = 0; i < io_info->nOutputSize; ++i)
+        {
+            auto& output = io_info->pOutputs[i];
+            auto& info = joint_io_arr.pOutputs[i];
+
+            auto ptr = (float*)info.pVirAddr;
+
+            int32_t stride = (1 << i) * 8;
+            det::generate_proposals_yolov5_license_plate(stride, ptr, PROB_THRESHOLD, proposals, input_w, input_h, ANCHORS, prob_threshold_unsigmoid);
+        }
+
+        det::get_out_bbox(proposals, objects, NMS_THRESHOLD, input_h, input_w, mat.rows, mat.cols);
 
         // 6. show time costs
         fprintf(stdout, "--------------------------------------\n");
@@ -271,8 +286,21 @@ namespace ax
                 *min_max_time.second,
                 *min_max_time.first);
         fprintf(stdout, "--------------------------------------\n");
+        fprintf(stdout, "detection num: %d\n", objects.size());
 
-        pose::draw_result(mat, ai_point_result, HRNET_JOINTS, HRNET_W, HRNET_H);
+        std::vector<det::PalmObject> tmp_objects(objects.size());
+
+        for (size_t i = 0; i < objects.size(); i++)
+        {
+            det::PalmObject& obj = tmp_objects[i];
+            obj.rect = objects[i].rect;
+            obj.vertices[0] = objects[i].landmark[0];
+            obj.vertices[1] = objects[i].landmark[1];
+            obj.vertices[2] = objects[i].landmark[2];
+            obj.vertices[3] = objects[i].landmark[3];
+        }
+
+        det::draw_objects_palm(mat, tmp_objects, "yolov5s_license_plate_out");
 
         clear_and_exit();
         return true;
@@ -284,7 +312,7 @@ int main(int argc, char* argv[])
     cmdline::parser cmd;
     cmd.add<std::string>("model", 'm', "joint file(a.k.a. joint model)", true, "");
     cmd.add<std::string>("image", 'i', "image file", true, "");
-    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(HRNET_H) + "," + std::to_string(HRNET_W));
+    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(DEFAULT_IMG_H) + "," + std::to_string(DEFAULT_IMG_W));
 
     cmd.add<int>("repeat", 'r', "repeat count", false, DEFAULT_LOOP_COUNT);
     cmd.parse_check(argc, argv);
@@ -310,7 +338,7 @@ int main(int argc, char* argv[])
 
     auto input_size_string = cmd.get<std::string>("size");
 
-    std::array<int, 2> input_size = {HRNET_H, HRNET_W};
+    std::array<int, 2> input_size = {DEFAULT_IMG_H, DEFAULT_IMG_W};
 
     auto input_size_flag = utilities::parse_string(input_size_string, input_size);
 
@@ -320,7 +348,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Input %s(%s) is not allowed, please check it.\n", kind.c_str(), value.c_str());
         };
 
-        if (!input_size_flag) { show_error("size", input_size_string); }
+        show_error("size", input_size_string);
 
         return -1;
     }
@@ -342,9 +370,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Read image failed.\n");
         return -1;
     }
-    int src_w = mat.cols;
-    int src_h = mat.rows;
-    common::get_input_data_no_letterbox(mat, image, input_size[0], input_size[1]);
+    common::get_input_data_letterbox(mat, image, input_size[0], input_size[1], true);
 
     // 3. init ax system, if NOT INITED in other apps.
     //   if other app init the device, DO NOT INIT DEVICE AGAIN.
@@ -368,10 +394,8 @@ int main(int argc, char* argv[])
     auto flag = ax::run_detection(model_file, image, repeat, mat, input_size[0], input_size[1]);
     if (!flag)
     {
-        fprintf(stderr, "Run hrnet failed.\n");
+        fprintf(stderr, "Run classification failed.\n");
     }
-
-    cv::imwrite("./hrnet_res.jpg", mat);
 
     // 6. last de-init
     //   as step 1, if the device inited by another app, DO NOT de-init the

@@ -15,7 +15,7 @@
  */
 
 /*
- * Author: hebing
+ * Author: FeiGeChuanShu
  */
 
 #include <cstdio>
@@ -25,9 +25,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "base/detection.hpp"
-#include "base/transform.hpp"
 #include "base/common.hpp"
-#include "base/pose.hpp"
 #include "middleware/io.hpp"
 
 #include "utilities/args.hpp"
@@ -40,17 +38,27 @@
 #include "joint.h"
 #include "joint_adv.h"
 
-#include <iostream>
-#include <fstream>
+const int DEFAULT_IMG_H = 640;
+const int DEFAULT_IMG_W = 640;
 
-const int HRNET_H = 256;
-const int HRNET_W = 192;
-const int HRNET_JOINTS = 17;
+const char* CLASS_NAMES[] = {
+    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
+    "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
+    "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
+    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
+    "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
+    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
+    "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
+    "hair drier", "toothbrush"};
 
 const int DEFAULT_LOOP_COUNT = 1;
-
+const int CLS_NUM = 80;
+const float PROB_THRESHOLD = 0.3f;
+const float NMS_THRESHOLD = 0.65f;
 namespace ax
 {
+    namespace det = detection;
     namespace mw = middleware;
     namespace utl = utilities;
 
@@ -243,13 +251,19 @@ namespace ax
         }
         fprintf(stdout, "run over: output len %d\n", io_info->nOutputSize);
 
-        // 5. get result
-        pose::ai_body_parts_s ai_point_result;
-        auto& output = io_info->pOutputs[0];
-        auto& info = joint_io_arr.pOutputs[0];
-        auto ptr = (float*)info.pVirAddr;
+        // 5. get bbox
+        std::vector<det::Object> proporsel;
+        std::vector<det::Object> objects;
 
-        pose::post_process(ptr, ai_point_result, HRNET_JOINTS, HRNET_H, HRNET_W);
+        for (uint32_t i = 0; i < io_info->nOutputSize; ++i)
+        {
+            auto& info = joint_io_arr.pOutputs[i];
+            auto ptr = (float*)info.pVirAddr;
+            int32_t stride = (1 << i) * 8;
+            det::generate_proposals_yolov6(stride, ptr, PROB_THRESHOLD, proporsel, input_w, input_h, CLS_NUM);
+        }
+
+        det::get_out_bbox(proporsel, objects, NMS_THRESHOLD, input_h, input_w, mat.rows, mat.cols);
 
         // 6. show time costs
         fprintf(stdout, "--------------------------------------\n");
@@ -271,9 +285,9 @@ namespace ax
                 *min_max_time.second,
                 *min_max_time.first);
         fprintf(stdout, "--------------------------------------\n");
+        fprintf(stdout, "detection num: %d\n", objects.size());
 
-        pose::draw_result(mat, ai_point_result, HRNET_JOINTS, HRNET_W, HRNET_H);
-
+        det::draw_objects(mat, objects, CLASS_NAMES, "yolov6s");
         clear_and_exit();
         return true;
     }
@@ -284,7 +298,7 @@ int main(int argc, char* argv[])
     cmdline::parser cmd;
     cmd.add<std::string>("model", 'm', "joint file(a.k.a. joint model)", true, "");
     cmd.add<std::string>("image", 'i', "image file", true, "");
-    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(HRNET_H) + "," + std::to_string(HRNET_W));
+    cmd.add<std::string>("size", 'g', "input_h, input_w", false, std::to_string(DEFAULT_IMG_H) + "," + std::to_string(DEFAULT_IMG_W));
 
     cmd.add<int>("repeat", 'r', "repeat count", false, DEFAULT_LOOP_COUNT);
     cmd.parse_check(argc, argv);
@@ -310,7 +324,7 @@ int main(int argc, char* argv[])
 
     auto input_size_string = cmd.get<std::string>("size");
 
-    std::array<int, 2> input_size = {HRNET_H, HRNET_W};
+    std::array<int, 2> input_size = {DEFAULT_IMG_H, DEFAULT_IMG_W};
 
     auto input_size_flag = utilities::parse_string(input_size_string, input_size);
 
@@ -320,7 +334,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Input %s(%s) is not allowed, please check it.\n", kind.c_str(), value.c_str());
         };
 
-        if (!input_size_flag) { show_error("size", input_size_string); }
+        show_error("size", input_size_string);
 
         return -1;
     }
@@ -342,9 +356,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Read image failed.\n");
         return -1;
     }
-    int src_w = mat.cols;
-    int src_h = mat.rows;
-    common::get_input_data_no_letterbox(mat, image, input_size[0], input_size[1]);
+
+    common::get_input_data_letterbox(mat, image, input_size[0], input_size[1]);
 
     // 3. init ax system, if NOT INITED in other apps.
     //   if other app init the device, DO NOT INIT DEVICE AGAIN.
@@ -368,10 +381,8 @@ int main(int argc, char* argv[])
     auto flag = ax::run_detection(model_file, image, repeat, mat, input_size[0], input_size[1]);
     if (!flag)
     {
-        fprintf(stderr, "Run hrnet failed.\n");
+        fprintf(stderr, "Run classification failed.\n");
     }
-
-    cv::imwrite("./hrnet_res.jpg", mat);
 
     // 6. last de-init
     //   as step 1, if the device inited by another app, DO NOT de-init the

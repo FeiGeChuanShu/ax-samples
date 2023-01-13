@@ -349,6 +349,28 @@ Repeat 10 times, avg time 14.11 ms, max_time 14.64 ms, min_time 14.04 ms
 ```
 ![HRNet](../docs/hrnet.png)
 
+#### HRNet_animal
+```
+root@AXERA:~/samples# ./ax_hrnet -m hrnet_animal_256x256.joint -i ssd_horse.jpg -r 10
+--------------------------------------
+model file : models/hrnet_animal_256x256.joint
+image file : images/ssd_horse.jpg
+img_h, img_w : 256 256
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.20
+07305a6
+run over: output len 1
+--------------------------------------
+Create handle took 1420.85 ms (neu 28.09 ms, axe 0.00 ms, overhead 1392.76 ms)
+--------------------------------------
+Repeat 10 times, avg time 17.49 ms, max_time 18.06 ms, min_time 17.40 ms
+--------------------------------------
+```
+![HRNet](../docs/hrnet_animal.jpg)
+
 #### AX-POSE-PPL
 ```
 root@AXERA:~/test# ./ax_pose_ppl -d ./models/ax_person_det.joint -p ./models/ax_pose.joint -i align_npu.jpg
@@ -485,6 +507,165 @@ detection num: 2
  0:  82%, [ 229,   17,  333,  278], person
 ```
 ![yolov5s-seg](../docs/yolov5s_seg.jpg)
+
+#### YOLOv5-License-plate
+```
+root@AXERA:~/samples# ./ax_yolov5s_license_plate -m ../models/license_plate_det.joint -i license_plate.png -g 640,384
+--------------------------------------
+model file : ../models/license_plate_det.joint
+image file : license_plate.png
+img_h, img_w : 640 384
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.26
+6b66666
+run over: output len 3
+--------------------------------------
+Create handle took 417.79 ms (neu 42.09 ms, axe 0.00 ms, overhead 375.70 ms)
+--------------------------------------
+Repeat 1 times, avg time 30.51 ms, max_time 30.51 ms, min_time 30.51 ms
+--------------------------------------
+detection num: 1
+```
+![yolov5s-license](../docs/yolov5s_license_plate_out.jpg)
+
+#### PalmDetection
+```
+root@AXERA:~/samples# ./ax_palm_detection -m ./palm_detection.joint -i ./img-7.jpg -r 10
+--------------------------------------
+model file : ./palm_detection.joint
+image file : ./img-7.jpg
+img_h, img_w : 192 192
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.14
+4111370
+run over: output len 2
+--------------------------------------
+Create handle took 248.70 ms (neu 15.28 ms, axe 13.81 ms, overhead 219.60 ms)
+--------------------------------------
+Repeat 10 times, avg time 20.46 ms, max_time 22.86 ms, min_time 20.11 ms
+--------------------------------------
+detection num: 2
+```
+![PalmDetection](../docs/palm_detection.jpg)
+
+#### YOLOPv2
+```
+root@AXERA:~/samples# ./ax_yolopv2 -m ./yolopv2.joint -i ./img-1199.jpg -r 10
+--------------------------------------
+model file : ./yolopv2.joint
+image file : ./img-1199.jpg
+img_h, img_w : 288 480
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.20
+07305a6
+run over: output len 5
+--------------------------------------
+Create handle took 2406.15 ms (neu 116.83 ms, axe 0.00 ms, overhead 2289.33 ms)
+--------------------------------------
+Repeat 10 times, avg time 100.69 ms, max_time 101.74 ms, min_time 100.50 ms
+--------------------------------------
+detection num: 12
+ 3:  92%, [ 471,  273,  565,  346]
+ 3:  91%, [ 618,  289,  692,  347]
+ 3:  88%, [  72,  292,  225,  344]
+ 3:  85%, [ 230,  289,  293,  327]
+ 3:  79%, [ 281,  296,  350,  323]
+ 3:  79%, [ 551,  285,  594,  320]
+ 3:  75%, [   0,  307,   34,  353]
+ 3:  74%, [ 585,  279,  615,  308]
+ 3:  60%, [ 720,  278,  744,  298]
+ 3:  53%, [ 447,  262,  492,  309]
+ 3:  42%, [ 675,  275,  700,  300]
+ 3:  39%, [ 620,  278,  661,  302]
+```
+![YOLOPv2](../docs/yolopv2.jpg)
+
+#### YOLOv7-Face
+```
+root@AXERA:~/samples# ./ax_yolov7s_face -m ./yolov7s-face.joint -i ./selfie.jpg -r 10
+--------------------------------------
+model file : ./yolov7s-face.joint
+image file : ./selfie.jpg
+img_h, img_w : 640 640
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.20
+07305a6
+run over: output len 3
+--------------------------------------
+Create handle took 481.47 ms (neu 31.83 ms, axe 0.00 ms, overhead 449.64 ms)
+--------------------------------------
+Repeat 10 times, avg time 25.46 ms, max_time 25.83 ms, min_time 25.39 ms
+--------------------------------------
+detection num: 217
+```
+![yolov7s-face](../docs/yolov7s_face.jpg)
+
+#### YOLOv7-Palm
+```
+root@AXERA:~/samples# ./ax_yolov7s_palm -m ./yolov7s-palm.joint -i ./img-7.jpg -r 10
+--------------------------------------
+model file : ./yolov7s-palm.joint
+image file : ./img-7.jpg
+img_h, img_w : 320 320
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.20
+07305a6
+run over: output len 3
+--------------------------------------
+Create handle took 335.46 ms (neu 14.35 ms, axe 0.00 ms, overhead 321.11 ms)
+--------------------------------------
+Repeat 10 times, avg time 7.65 ms, max_time 12.25 ms, min_time 7.11 ms
+--------------------------------------
+detection num: 2
+```
+![yolov7s-palm](../docs/yolov7s_palm.jpg)
+
+#### YOLOv6s
+```
+root@AXERA:~/samples# ./ax_yolov6s -m ./yolov6s.joint -i ./image1.jpg -r 10
+--------------------------------------
+model file : ./yolov6s.joint
+image file : ./image1.jpg
+img_h, img_w : 640 640
+[AX_SYS_LOG] AX_SYS_Log2ConsoleThread_Start
+Run-Joint Runtime version: 0.5.10
+--------------------------------------
+[INFO]: Virtual npu mode is 1_1
+
+Tools version: 0.6.1.14
+4111370
+run over: output len 3
+--------------------------------------
+Create handle took 853.99 ms (neu 18.95 ms, axe 0.00 ms, overhead 835.04 ms)
+--------------------------------------
+Repeat 10 times, avg time 32.42 ms, max_time 32.93 ms, min_time 32.35 ms
+--------------------------------------
+detection num: 3
+ 0:  95%, [   1,    2,  400,  530], person
+ 0:  90%, [ 291,   80,  635,  532], person
+27:  84%, [ 195,  200,  254,  411], tie
+```
+![YOLOv6s](../docs/yolov6s.jpg)
 
 ## 模型说明
 ### YOLOv3(Paddle)
